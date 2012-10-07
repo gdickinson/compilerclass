@@ -14,10 +14,12 @@ int line = 1;
 
 %}
 
+%option noyywrap
+
 DIGIT     [0-9]
 INTEGER   {DIGIT}*
 LETTER    [a-zA-Z]
-ID        {LETTER}({LETTER}|{DIGIT})*
+ID        {LETTER}({LETTER}|{DIGIT}|\_)*
 WS        [ \t]
 RELOP     (<|>|<=|>=|<>|=)
 BINOP     [\+\-\*\/]
