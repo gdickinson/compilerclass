@@ -9,7 +9,7 @@ Fall, 2012
 %{
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "parser.tab.h"
 int line = 1;
 
 %}
@@ -37,71 +37,71 @@ BINOP     [\+\-\*\/]
 \n                          {line++;}
 
 
-and                         {printf("AND \n"); return 1;}
-begin                       {printf("BEGIN \n"); return 1;}
-forward                     {printf("FORWARD \n"); return 1;}
-div                         {printf("DIV \n"); return 1;}
-do                          {printf("DO \n"); return 1;}
-else                        {printf("ELSE \n"); return 1;}
-end                         {printf("END \n"); return 1;}
-for                         {printf("FOR \n"); return 1;}
-function                    {printf("FUNCTION \n"); return 1;}
-if                          {printf("IF \n"); return 1;}
-array                       {printf("ARRAY \n"); return 1;}
-mod                         {printf("MOD \n"); return 1;}
-not                         {printf("NOT \n"); return 1;}
-of                          {printf("OF \n"); return 1;}
-or                          {printf("OR \n"); return 1;}
-procedure                   {printf("PROCEDURE \n"); return 1;}
-program                     {printf("PROGRAM \n"); return 1;}
-record                      {printf("RECORD \n"); return 1;}
-then                        {printf("THEN \n"); return 1;}
-to                          {printf("TO \n"); return 1;}
-type                        {printf("TYPE \n"); return 1;}
-var                         {printf("VAR \n"); return 1;}
-while                       {printf("WHILE \n"); return 1;}
+and                         {return AND;}
+begin                       {return BEGN;}
+forward                     {return FORWARD;}
+div                         {return DIV;}
+do                          {return DO;}
+else                        {return ELSE;}
+end                         {return END;}
+for                         {return FOR;}
+function                    {return FUNCTION;}
+if                          {return IF;}
+array                       {return ARRAY;}
+mod                         {return MOD;}
+not                         {return NOT;}
+of                          {return OF;}
+or                          {return OR;}
+procedure                   {return PROCEDURE;}
+program                     {return PROGRAM;}
+record                      {return RECORD;}
+then                        {return THEN;}
+to                          {return TO;}
+type                        {return TYPE;}
+var                         {return VAR;}
+while                       {return WHILE;}
 
-{RELOP}                     {printf("RELOP: %s \n\n", yytext); return 1;}
-{BINOP}                     {printf("BINOP: %s \n\n", yytext); return 1;}
+{RELOP}                     {yylval.sval = yytext; return RELOP;}
+{BINOP}                     {yylval.sval = yytext; return BINOP;}
 
-\;                          {printf("SEMIC \n"); return 1;}
-\.\.                        {printf("DOUBLEDOT \n"); return 1;}
-\.                          {printf("DOT \n"); return 1;}
-,                           {printf("COMMA \n"); return 1;}
-:=                          {printf("ASSIGN \n"); return 1;}
-:                           {printf("COLON \n"); return 1;}
-\(                          {printf("LPAR \n"); return 1;}
-\)                          {printf("RPAR \n"); return 1;}
-\[                          {printf("LBKT \n"); return 1;}
-\]                          {printf("RBKT \n"); return 1;}
+\;                          {return SEMIC;}
+\.\.                        {return DOUBLEDOT;}
+\.                          {return DOT;}
+,                           {return COMMA;}
+:=                          {return ASSIGN;}
+:                           {return COLON;}
+\(                          {return LPAR;}
+\)                          {return RPAR;}
+\[                          {return LBKT;}
+\]                          {return RBKT;}
 
-{INTEGER}                   {printf("INTEGER: %d \n", atoi(yytext)); return 1;}
-\".*\"                      {printf("STRING: %s \n", yytext); return 1;}
-{ID}                        {printf("ID: %s \n", yytext); return 1;}
+{INTEGER}                   {yylval.ival = atoi(yytext); return INTEGER;}
+\".*\"                      {yylval.sval = yytext; return STRING;}
+{ID}                        {// TODO: SYMBOLTABLE
+                             yylval.sval = yytext; return ID;}
 
 .                           {printf("Parse error at line %d. Herp derp. \n", line); exit(-1);}
 
 %%
 
-int main(int argc, char** argv) {
-  FILE* file;
-  if (argc == 2) {
-    
-    file = fopen(argv[1], "r\n");
+/* int main(int argc, char** argv) { */
+/*   FILE* file; */
+/*   if (argc == { */
+/*     file = fopen(argv[1], "r\n"); */
 
-    if(!file) {
-     fprintf(stderr, "Could not open %s \n", argv[1]);
-     exit(1);
-  } 
+/*     if(!file) { */
+/*      fprintf(stderr, "Could not open %s \n", argv[1]); */
+/*      exit(1); */
+/*   } */
 
-   yyin = file;
+/*    yyin = file; */
 
- } else {
-    yyin = stdin;
-  }
+/*  } else { */
+/*     yyin = stdin; */
+/*   } */
 
-  int res = 1;
-  while (res) {
-    res = yylex();
-  }
-}
+/*   int res = 1; */
+/*   while (res) { */
+/*     res = yylex(); */
+/*   } */
+/* } */
