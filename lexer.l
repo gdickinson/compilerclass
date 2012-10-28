@@ -21,8 +21,8 @@ INTEGER   {DIGIT}*
 LETTER    [a-zA-Z]
 ID        {LETTER}({LETTER}|{DIGIT}|\_)*
 WS        [ \t]
-RELOP     (<|>|<=|>=|<>|=)
-BINOP     [\+\-\*\/]
+                  //RELOP     (<|>|<=|>=|<>|=)
+                  //BINOP     [\+\-\*\/]
 
 %x        COMMENT
 
@@ -61,8 +61,16 @@ type                        {return TYPE;}
 var                         {return VAR;}
 while                       {return WHILE;}
 
-{RELOP}                     {yylval.sval = yytext; return RELOP;}
-{BINOP}                     {yylval.sval = yytext; return BINOP;}
+\+                          {return PLUS;}
+\-                          {return MINUS;}
+\*                          {return MULTIPLY;}
+\/                          {return DIVIDE;}
+\<                          {return LESSTHAN;}
+\>                          {return GREATERTHAN;}
+\<\>                        {return DIAMOND;}
+\<\=                        {return LEQ;}
+\>\=                        {return GEQ;}
+\=                          {return EQUALS;}
 
 \;                          {return SEMIC;}
 \.\.                        {return DOUBLEDOT;}
