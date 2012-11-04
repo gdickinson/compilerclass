@@ -9,20 +9,21 @@ Fall, 2012
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "symtab.h"
 #include "parser.tab.h"
 int line = 1;
+extern symbol* symtab;
 
 %}
 
 %option noyywrap
+%option yylineno
 
 DIGIT     [0-9]
 INTEGER   {DIGIT}*
 LETTER    [a-zA-Z]
 ID        {LETTER}({LETTER}|{DIGIT}|\_)*
 WS        [ \t]
-                  //RELOP     (<|>|<=|>=|<>|=)
-                  //BINOP     [\+\-\*\/]
 
 %x        COMMENT
 
@@ -85,8 +86,8 @@ while                       {return WHILE;}
 
 {INTEGER}                   {yylval.ival = atoi(yytext); return INTEGER;}
 \".*\"                      {yylval.sval = yytext; return STRING;}
-{ID}                        {// TODO: SYMBOLTABLE
-                             yylval.sval = yytext; return ID;}
+{ID}                        {yylval.sym = lookup(yytext, symtab);
+                             return ID;}
 
 .                           {printf("Parse error at line %d. Herp derp. \n", line); exit(-1);}
 
