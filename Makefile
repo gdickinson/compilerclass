@@ -4,7 +4,7 @@ YACC    = bison -y -d
 #RM	= rm
 
 parser: symtab.o  parser.tab.o lex.yy.c
-	$(CC) -lfl -ly -o $@ $?
+	$(CC) -o $@ $?
 
 lex.yy.c: parser.tab.h
 
