@@ -1,14 +1,24 @@
 CC	= gcc
 LEX     = flex
-YACC    = bison -y
-YFLAGS 	= -d
+YACC    = bison -y -d
 #RM	= rm
-objects = lexer.o lexer.c
 
+parser: symtab.o  parser.tab.o lex.yy.c
+	$(CC) -lfl -ly -o $@ $?
 
-lexer:		lexer.c
-	gcc lexer.c -o lexer
-lexer.c:
-	flex -o lexer.c lexer.l
+lex.yy.c: parser.tab.h
+
+%.o: %.c
+	$(CC) -c $<
+
+%.yy.c: %.l
+	$(LEX) -o $@ $<
+
+%.tab.c: %.y
+	$(YACC) -o $@ $<
+
+%.tab.h: %.tab.c
+	@touch $@
+
 clean:
-	rm *.c lexer
+	rm *.tab.h *.tab.c *.o parser.output parser *.yy.c
