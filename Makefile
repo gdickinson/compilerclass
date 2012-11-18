@@ -1,9 +1,9 @@
-CC	= gcc
+CC	= clang
 LEX     = flex
 YACC    = bison -y -d
 #RM	= rm
 
-parser: symtab.o  parser.tab.o lex.yy.c
+parser: symtab.o parser.tab.o linkedlist.o lex.yy.c
 	$(CC) -o $@ $?
 
 lex.yy.c: parser.tab.h

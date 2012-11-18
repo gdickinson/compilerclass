@@ -12,7 +12,8 @@ Fall, 2012
 #include "symtab.h"
 #include "parser.tab.h"
 int line = 1;
-extern symbol* symtab;
+extern scope* symtab_root;
+extern scope* current_scope;
 
 %}
 
@@ -86,31 +87,10 @@ while                       {return WHILE;}
 
 {INTEGER}                   {yylval.ival = atoi(yytext); return INTEGER;}
 \".*\"                      {yylval.sval = yytext; return STRING;}
-{ID}                        {yylval.sym = lookup(yytext, symtab);
+{ID}                        {yylval.sym = lookup(yytext, current_scope);
                              return ID;}
 
-.                           {printf("Parse error at line %d. Herp derp. \n", line); exit(-1);}
+.                           {printf("Lexical error at line %d. Herp derp. \n", line); exit(-1);}
 
 %%
 
-/* int main(int argc, char** argv) { */
-/*   FILE* file; */
-/*   if (argc == { */
-/*     file = fopen(argv[1], "r\n"); */
-
-/*     if(!file) { */
-/*      fprintf(stderr, "Could not open %s \n", argv[1]); */
-/*      exit(1); */
-/*   } */
-
-/*    yyin = file; */
-
-/*  } else { */
-/*     yyin = stdin; */
-/*   } */
-
-/*   int res = 1; */
-/*   while (res) { */
-/*     res = yylex(); */
-/*   } */
-/* } */

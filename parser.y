@@ -29,6 +29,9 @@ typedef struct idlist {
     int cnt;
 } idlist;
 
+scope* symtab_root;
+scope* current_scope;
+
 idlist* saved_symbols;
 
 void insert_saved_symbol(symbol* sym, idlist* list);
@@ -407,9 +410,21 @@ void process_saved_symbols(idlist* list, char* type) {
 
 int main(int argc, char** argv) {
 
+    printf("Starting main\n");
     // Initialize globals
-    symtab = malloc(sizeof(symbol) * MAX_SYMBOLS);
+    // Create the root scope
+    symtab_root = create_scope(NULL);
+
+    add_symbol_to_scope(symtab_root, create_symbol_with_type("integer", "type"));
+    add_symbol_to_scope(symtab_root, create_symbol_with_type("string", "type"));
+    add_symbol_to_scope(symtab_root, create_symbol_with_type("boolean", "type"));
+
+    current_scope = symtab_root;
+
+    // Create a scratch space for processing identifier lists.
     saved_symbols = malloc(sizeof(idlist));
+
+    printf("Debug: Initialized all constants\n");
 
     FILE *input;
     if (argc > 1) {
@@ -428,10 +443,10 @@ int main(int argc, char** argv) {
     } while (!feof(yyin));
 
     // Print out the symbol table
-    print_table(symtab);
+    //print_table(symtab);
 
     // Free globals
-    free(symtab);
+    free(symtab_root);
     free(saved_symbols);
 }
 

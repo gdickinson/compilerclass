@@ -12,8 +12,8 @@ node* list_create(void* data);
 
 node* list_append(node* n, void* data);
 
-node* list_foreach(node* n, int(*func)(void*));
+void list_foreach(node* n, void(*func)(void*));
 
-node* list_find(node* n, int(*func)(void*));
+node* list_search(node* n, int(*func)(void*, void*), void* target);
 
 #endif
