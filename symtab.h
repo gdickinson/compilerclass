@@ -41,4 +41,7 @@ symbol* create_symbol_with_type(char* name, char* type);
 
 void print_symbol_table(void* rootscope);
 
+// Dumbish typechecking. Checks to see if type1 resolves to type2 by walking up the scopes.
+int typecheck(char* type1, char* type2, scope* s);
+
 #endif

@@ -103,8 +103,16 @@ void process_saved_symbols(idlist* list, char* type);
 %token <sval> STRING
 %token <sym> ID
 
+
 // Some nonterminals have types so we can manipulate the symbol table
 %type <sval> type
+%type <sym> result_type
+%type <sval> factor // A bit stringly-typed but it'll be ok for now
+%type <sval> variable
+%type <sval> expression
+%type <sval> simple_expression
+%type <sval> function_reference
+%type <sval> term
 
 %%
 
@@ -215,14 +223,16 @@ block_or_forward:
          ;
 
 function_declaration:
-                FUNCTION ID LPAR //{current_scope = create_scope(current_scope);}
+                FUNCTION
+                ID {current_scope = create_scope(current_scope);
+                $2->type = "FUNCTION";}
+                LPAR
                 formal_parameters RPAR COLON result_type SEMIC block_or_forward
-
                 {
-                $2->type = malloc(100);
-                sprintf($2->type, "FUNCTION (%d args)", saved_symbols->cnt);
-                reset_saved_symbols(saved_symbols); }
-//                current_scope = current_scope->parent;
+                $2->type = $8->name;
+                //sprintf($2->type, "FUNCTION (%d args)", saved_symbols->cnt);
+                reset_saved_symbols(saved_symbols);
+                current_scope = current_scope->parent;}
 //                printf("function_declaration \n"); }
         ;
 
@@ -274,7 +284,12 @@ simple_statement:
 
 assignment_statement:
                 variable ASSIGN expression
-//                { printf("assignment_statement\n"); }
+                {
+                    if (typecheck($1, $3, current_scope) ) {
+                        printf("Incompatible type assignment %s, %s at line %d\n", $1, $3, yylineno);
+                    }
+                }
+//                { printf("assignent_statement\n"); }
         ;
 
 component_selection:
@@ -339,9 +354,9 @@ relational_op:
         ;
 
 simple_expression:
-                term
-        |       sign term
-        |       simple_expression add_op term
+                term {$$ = $1;}
+        |       sign term {$$ = $2;}
+        |       simple_expression add_op term {$$ = $3}
 //                {printf("simple_expression\n"); }
         ;
 
@@ -353,8 +368,8 @@ add_op:
         ;
 
 term:
-                factor
-        |       factor mul_op term
+                factor {$$ = $1;}
+        |       factor mul_op term {$$ = $1;}
 //                { printf("term\n"); }
         ;
 
@@ -367,12 +382,12 @@ mul_op:
         ;
 
 factor:
-                INTEGER
-        |       STRING
-        |       variable
-        |       function_reference
-        |       NOT factor
-        |       LPAR expression RPAR
+                INTEGER { $$ = "integer" }
+        |       STRING { $$ = "string" }
+        |       variable { $$ = $1  }
+        |       function_reference { $$ = $1 }
+        |       NOT factor { $$ = $2 }
+        |       LPAR expression RPAR { $$ = $2 }
 //                { printf ("factor\n"); }
         ;
 
@@ -380,20 +395,22 @@ function_reference:
                 ID LPAR actual_parameter_list RPAR
                 {
                     if (!$1->type) {
-                        printf("WARNING: %s referenced without declaration\n", $1->name);
+                        printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
+                        exit(-1);
                         }
+                        $$ = $1->type;
                 }
-//                { printf("function_reference\n"); }
         ;
 
 variable:
                 ID component_selection
                 {
                     if (!$1->type) {
-                        printf("WARNING: %s referenced without declaration\n", $1->name);
+                        printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
+                        exit(-1);
                     }
+                    $$ = $1->type;
                 }
-//                {printf("variable\n"); }
         ;
 
 identifier_list:

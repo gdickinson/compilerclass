@@ -95,3 +95,15 @@ void print_symbol_table(void* rootscope) {
     printf("\n");
     list_foreach(castedscope->children, print_symbol_table);
 }
+
+int typecheck(char* type1, char* type2, scope* s) {
+    // Total hack to allow for return values. This is dreadful and I am ashamed.
+    if (strcmp (type1, "FUNCTION") == 0) {
+        return 0;
+    }
+    symbol* sym = lookup(type1, s);
+    if (sym) {
+        return strcmp(sym->type, type2);
+    }
+    else { return -1; }
+}
