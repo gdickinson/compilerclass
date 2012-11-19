@@ -7,13 +7,18 @@
 #ifndef SYMTAB_H
 #define SYMTAB_H
 
+// Symbols contain two strings (a name and a type)
 typedef struct symbol {
     char* name;
     char* type;
 } symbol;
 
+// Scopes contain a pointer to their parent (for efficient upward searching),
+// a list of child scopes (for debugging only),
+// and a list of symbols within that scope
 typedef struct scope {
     struct scope* parent;
+    node* children;
     node* symbol_list;
 } scope;
 
@@ -25,10 +30,15 @@ int find_symbol(void* testsymbol, void* targetname);
 
 void add_symbol_to_scope(scope* s, symbol* symbol);
 
+// Allocates a partially-hydrated scope; at create time the linked-list of symbols is null.
 scope* create_scope(scope* parent);
 
 symbol* create_symbol(char* name);
 
+// Convenience method which adds a fully-hydrated symbol to a scope, useful for manipulating
+// the root scope before compilation begins.
 symbol* create_symbol_with_type(char* name, char* type);
+
+void print_symbol_table(void* rootscope);
 
 #endif
