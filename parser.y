@@ -378,11 +378,21 @@ factor:
 
 function_reference:
                 ID LPAR actual_parameter_list RPAR
+                {
+                    if (!$1->type) {
+                        printf("WARNING: %s referenced without declaration\n", $1->name);
+                        }
+                }
 //                { printf("function_reference\n"); }
         ;
 
 variable:
                 ID component_selection
+                {
+                    if (!$1->type) {
+                        printf("WARNING: %s referenced without declaration\n", $1->name);
+                    }
+                }
 //                {printf("variable\n"); }
         ;
 
