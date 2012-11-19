@@ -356,7 +356,7 @@ relational_op:
 simple_expression:
                 term {$$ = $1;}
         |       sign term {$$ = $2;}
-        |       simple_expression add_op term {$$ = $3}
+        |       simple_expression add_op term {$$ = $3;}
 //                {printf("simple_expression\n"); }
         ;
 
@@ -382,12 +382,12 @@ mul_op:
         ;
 
 factor:
-                INTEGER { $$ = "integer" }
-        |       STRING { $$ = "string" }
-        |       variable { $$ = $1  }
-        |       function_reference { $$ = $1 }
-        |       NOT factor { $$ = $2 }
-        |       LPAR expression RPAR { $$ = $2 }
+                INTEGER { $$ = "integer"; }
+        |       STRING { $$ = "string"; }
+        |       variable { $$ = $1;  }
+        |       function_reference { $$ = $1; }
+        |       NOT factor { $$ = $2; }
+        |       LPAR expression RPAR { $$ = $2; }
 //                { printf ("factor\n"); }
         ;
 
