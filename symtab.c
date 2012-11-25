@@ -17,7 +17,6 @@ int find_symbol(void* testsymbol, void* targetname) {
 }
 
 symbol* lookup(char* id, scope* s) {
-
     scope* leaf = s;
 
     // Starting at the given scope, walk up the tree until we find a symbol.

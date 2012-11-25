@@ -3,7 +3,7 @@ LEX     = flex
 YACC    = bison -y -d
 #RM	= rm
 
-parser: symtab.o parser.tab.o linkedlist.o lex.yy.c
+symantic_analyzer: symtab.o parser.tab.o linkedlist.o lex.yy.c
 	$(CC) -o $@ $?
 
 lex.yy.c: parser.tab.h
@@ -21,4 +21,4 @@ lex.yy.c: parser.tab.h
 	@touch $@
 
 clean:
-	rm *.tab.h *.tab.c *.o parser.output parser *.yy.c
+	rm *.tab.h *.tab.c *.o parser.output symantic_analyzer *.yy.c
