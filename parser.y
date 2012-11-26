@@ -36,7 +36,7 @@ idlist* saved_symbols;
 
 void insert_saved_symbol(symbol* sym, idlist* list);
 void reset_saved_symbols(idlist* list);
-void process_saved_symbols(idlist* list, char* type);
+void process_saved_symbols(idlist* list, symbol* type);
 
 %}
 %verbose
@@ -105,14 +105,14 @@ void process_saved_symbols(idlist* list, char* type);
 
 
 // Some nonterminals have types so we can manipulate the symbol table
-%type <sval> type
+%type <sym> type
 %type <sym> result_type
-%type <sval> factor // A bit stringly-typed but it'll be ok for now
-%type <sval> variable
-%type <sval> expression
-%type <sval> simple_expression
-%type <sval> function_reference
-%type <sval> term
+%type <sym> factor
+%type <sym> variable
+%type <sym> expression
+%type <sym> simple_expression
+%type <sym> function_reference
+%type <sym> term
 
 %%
 
@@ -125,7 +125,7 @@ program:
                 subprogram_declarations
                 compound_statement
                 DOT
-                {   $2->type = "PROGRAM";}
+                {   $2->type = lookup("PROGRAM", symtab_root);}
 //                    printf("Matched program rule (Start Symbol)\n"); }
 ;
 
@@ -148,10 +148,10 @@ type_definition:
         ;
 
 type:
-                ID {$$ = $1->name;}
-        |       ARRAY OF type {$$ = "ARRAY";}
-        |       ARRAY LBKT constant DOUBLEDOT constant RBKT OF type {$$ = "ARRAY";}
-        |       RECORD field_list END {$$ = "RECORD";}
+                ID {$$ = $1->type;}
+        |       ARRAY OF type {$$ = lookup("ARRAY", symtab_root);}
+        |       ARRAY LBKT constant DOUBLEDOT constant RBKT OF type {$$ = lookup("ARRAY", symtab_root);}
+        |       RECORD field_list END {$$ = lookup("RECORD", symtab_root);}
         ;
 
 field_list:
@@ -210,8 +210,8 @@ block:
 procedure_declaration:
                 PROCEDURE ID LPAR formal_parameters RPAR SEMIC block_or_forward
                 {
-                $2->type = malloc(100);
-                sprintf($2->type, "PROCEDURE(%d args)", saved_symbols->cnt);
+                $2->type = lookup("PROCEDURE", symtab_root);
+                //sprintf($2->type, "PROCEDURE(%d args)", saved_symbols->cnt);
                 reset_saved_symbols(saved_symbols); }
 //                printf("procedure_declaration \n"); }
         ;
@@ -225,11 +225,11 @@ block_or_forward:
 function_declaration:
                 FUNCTION
                 ID {current_scope = create_scope(current_scope);
-                $2->type = "FUNCTION";}
+                $2->type = lookup("FUNCTION", symtab_root);}
                 LPAR
                 formal_parameters RPAR COLON result_type SEMIC block_or_forward
                 {
-                $2->type = $8->name;
+                $2->type = $8;
                 //sprintf($2->type, "FUNCTION (%d args)", saved_symbols->cnt);
                 reset_saved_symbols(saved_symbols);
                 current_scope = current_scope->parent;}
@@ -286,7 +286,7 @@ assignment_statement:
                 variable ASSIGN expression
                 {
                     if (typecheck($1, $3, current_scope) ) {
-                        printf("Incompatible type assignment %s, %s at line %d\n", $1, $3, yylineno);
+                        printf("Incompatible type assignment %s, %s at line %d\n", $1->name, $3->name, yylineno);
                     }
                 }
 //                { printf("assignent_statement\n"); }
@@ -382,9 +382,9 @@ mul_op:
         ;
 
 factor:
-                INTEGER { $$ = "integer"; }
-        |       STRING { $$ = "string"; }
-        |       variable { $$ = $1;  }
+                INTEGER { $$ = lookup("integer", symtab_root); }
+        |       STRING { $$ = lookup("string", symtab_root); }
+        |       variable { $$ = $1->type;  }
         |       function_reference { $$ = $1; }
         |       NOT factor { $$ = $2; }
         |       LPAR expression RPAR { $$ = $2; }
@@ -440,7 +440,7 @@ void reset_saved_symbols(idlist* list) {
     list->cnt = 0;
 }
 
-void process_saved_symbols(idlist* list, char* type) {
+void process_saved_symbols(idlist* list, symbol* type) {
     int i;
     for (i = 0; i < list->cnt; i++) {
         list->syms[i]->type = type;
@@ -452,11 +452,18 @@ int main(int argc, char** argv) {
     // Create the root scope
     symtab_root = create_scope(NULL);
 
-    add_symbol_to_scope(symtab_root, create_symbol_with_type("integer", "type"));
-    add_symbol_to_scope(symtab_root, create_symbol_with_type("string", "type"));
-    add_symbol_to_scope(symtab_root, create_symbol_with_type("boolean", "type"));
-    add_symbol_to_scope(symtab_root, create_symbol_with_type("true", "boolean"));
-    add_symbol_to_scope(symtab_root, create_symbol_with_type("false", "boolean"));
+    // Add root primitive types
+    add_symbol_to_scope(symtab_root, create_root_type("PROGRAM"));
+    add_symbol_to_scope(symtab_root, create_root_type("ARRAY"));
+    add_symbol_to_scope(symtab_root, create_root_type("RECORD"));
+    add_symbol_to_scope(symtab_root, create_root_type("PROCEDURE"));
+    add_symbol_to_scope(symtab_root, create_root_type("FUNCTION"));
+
+    add_symbol_to_scope(symtab_root, create_root_type("integer"));
+    add_symbol_to_scope(symtab_root, create_root_type("string"));
+    add_symbol_to_scope(symtab_root, create_root_type("boolean"));
+ //   add_symbol_to_scope(symtab_root, create_root_type("true", "boolean"));
+//    add_symbol_to_scope(symtab_root, create_root_type("false", "boolean"));
 
     current_scope = symtab_root;
 

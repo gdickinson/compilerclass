@@ -10,7 +10,7 @@
 // Symbols contain two strings (a name and a type)
 typedef struct symbol {
     char* name;
-    char* type;
+    struct symbol* type;
 } symbol;
 
 // Scopes contain a pointer to their parent (for efficient upward searching),
@@ -37,11 +37,14 @@ symbol* create_symbol(char* name);
 
 // Convenience method which adds a fully-hydrated symbol to a scope, useful for manipulating
 // the root scope before compilation begins.
-symbol* create_symbol_with_type(char* name, char* type);
+symbol* create_symbol_with_type(char* name, symbol* type);
 
 void print_symbol_table(void* rootscope);
 
-// Dumbish typechecking. Checks to see if type1 resolves to type2 by walking up the scopes.
-int typecheck(char* type1, char* type2, scope* s);
+// Dumbish typechecking. Checks to see if type2 resolves to type1 by walking up the scopes.
+int typecheck(symbol* type1, symbol* type2, scope* s);
+
+// Root types point to themselves
+symbol* create_root_type(char* name);
 
 #endif

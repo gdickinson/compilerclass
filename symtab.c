@@ -76,15 +76,24 @@ symbol* create_symbol(char* name) {
     return m;
 }
 
-symbol* create_symbol_with_type(char* name, char* type) {
+symbol* create_symbol_with_type(char* name, symbol* type) {
     symbol* m = create_symbol(name);
     m->type = type;
     return m;
 }
 
+// Convienience tail-recursive function which reduces a non-record type to its primitive.
+symbol* reduce_type(symbol*s) {
+    if (s->type == s) {
+        return s;
+    } else {
+        return reduce_type(s->type);
+    }
+}
+
 void print_symbol(void* sym) {
     symbol* s = (symbol*) sym;
-    printf("%s: %s\n", s->name, s->type);
+    printf("%s: %s (reduces to %s)\n", s->name, s->type->name, reduce_type(s)->name);
 }
 
 void print_symbol_table(void* rootscope) {
@@ -95,14 +104,21 @@ void print_symbol_table(void* rootscope) {
     list_foreach(castedscope->children, print_symbol_table);
 }
 
-int typecheck(char* type1, char* type2, scope* s) {
-    // Total hack to allow for return values. This is dreadful and I am ashamed.
-    if (strcmp (type1, "FUNCTION") == 0) {
+
+
+int typecheck(symbol* type1, symbol* type2, scope* s) {
+    // Total hack to allow for return values and other
+    // language corner-cases
+   if (strcmp(type1->name, "FUNCTION") == 0) {
         return 0;
     }
-    symbol* sym = lookup(type1, s);
-    if (sym) {
-        return strcmp(sym->type, type2);
-    }
-    else { return -1; }
+   symbol* prim1 = reduce_type(type1);
+   symbol* prim2 = reduce_type(type2);
+   return strcmp(prim1->name, prim2->name);
+}
+
+symbol* create_root_type(char* name) {
+    symbol* s = create_symbol(name);
+    s->type = s;
+    return s;
 }
