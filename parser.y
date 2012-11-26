@@ -126,25 +126,21 @@ program:
                 compound_statement
                 DOT
                 {   $2->type = lookup("PROGRAM", symtab_root);}
-//                    printf("Matched program rule (Start Symbol)\n"); }
 ;
 
 type_definitions:
                 TYPE type_definitions_list
         |      //Epsilon
-//                { printf("type_definitions\n"); }
         ;
 
 type_definitions_list:
                 type_definitions_list type_definition
         |       type_definition
-//                { printf("type_definitions_list \n"); }
         ;
 
 type_definition:
                 ID EQUALS type SEMIC
                 { $1->type = $3;}
-//                  printf("type_definition \n"); }
         ;
 
 type:
@@ -158,7 +154,6 @@ field_list:
                 identifier_list COLON type
         |       field_list SEMIC field_list
                 {   reset_saved_symbols(saved_symbols); }
-//                    printf("field_list \n"); }
         ;
 
 
@@ -166,92 +161,78 @@ variable_declarations:
                 VAR
                 variable_declarations_list
         |       // Epsilon
-//                { printf("variable_declarations \n"); }
         ;
 
 variable_declarations_list:
                 variable_declarations_list variable_declaration
         |       variable_declaration
-//                { printf("variable_declarations_list \n"); }
         ;
 
 variable_declaration:
                 identifier_list COLON type SEMIC
                 { process_saved_symbols(saved_symbols, $3);
                   reset_saved_symbols(saved_symbols); }
-//                  printf("variable declaration \n"); }
         ;
 
 subprogram_declarations:
                 subprogram_declaration_list
         |       // Epsilon
-//                { printf("subprogram_declarations \n"); }
         ;
 
 
 subprogram_declaration_list:
                 subprogram_declaration_list subprogram_declaration
         |       subprogram_declaration
-//                { printf("subprogram_declaration_list \n"); }
         ;
 
 subprogram_declaration:
                 procedure_declaration SEMIC
         |       function_declaration SEMIC
- //               { printf("subprogram_declaration \n"); }
         ;
 
 block:
                 variable_declarations compound_statement
         |       compound_statement
-//                { printf("block \n"); }
         ;
 
 procedure_declaration:
                 PROCEDURE ID LPAR formal_parameters RPAR SEMIC block_or_forward
                 {
                 $2->type = lookup("PROCEDURE", symtab_root);
-                //sprintf($2->type, "PROCEDURE(%d args)", saved_symbols->cnt);
                 reset_saved_symbols(saved_symbols); }
-//                printf("procedure_declaration \n"); }
         ;
 
 block_or_forward:
                 block
          |      FORWARD
-//                {printf("block_or_forward\n");}
          ;
 
 function_declaration:
                 FUNCTION
-                ID {current_scope = create_scope(current_scope);
-                $2->type = lookup("FUNCTION", symtab_root);}
+                ID
+                {current_scope = create_scope(current_scope);}
                 LPAR
-                formal_parameters RPAR COLON result_type SEMIC block_or_forward
+                formal_parameters RPAR COLON result_type SEMIC
+                { $2->type = $8; }
+                block_or_forward
                 {
-                $2->type = $8;
-                //sprintf($2->type, "FUNCTION (%d args)", saved_symbols->cnt);
                 reset_saved_symbols(saved_symbols);
                 current_scope = current_scope->parent;}
-//                printf("function_declaration \n"); }
         ;
 
 formal_parameters:
                 formal_parameter_list
         |       // Epsilon
-//                { printf("formal_parameters \n"); }
         ;
 
 formal_parameter_list:
                 formal_parameter SEMIC formal_parameter_list
         |       formal_parameter
-//                { printf("formal_parameter_list \n"); }
         ;
 
 formal_parameter:
                 identifier_list COLON type
                 { process_saved_symbols(saved_symbols, $3); }
-//                printf("formal_parameter \n"); }
         ;
 
 compound_statement:
@@ -260,26 +241,22 @@ compound_statement:
                 statement_sequence
                 {current_scope = current_scope->parent;}
                 END
-//                { printf("compound_statement \n"); }
         ;
 
 statement_sequence:
                 statement_sequence SEMIC statement
         |       statement
-//                { printf("statement_sequence \n"); }
         ;
 
 statement:
                 simple_statement
         |       structured_statement
-//                { printf("statement\n"); }
         ;
 
 simple_statement:
                 assignment_statement
         |       procedure_statement
         |       // Epsilon
-//                { printf("simple_statement\n"); }
         ;
 
 assignment_statement:
@@ -289,14 +266,12 @@ assignment_statement:
                         printf("Incompatible type assignment %s, %s at line %d\n", $1->name, $3->name, yylineno);
                     }
                 }
-//                { printf("assignent_statement\n"); }
         ;
 
 component_selection:
                 DOT ID
         |       LBKT expression RBKT component_selection
         |       // Epsilon
-//                { printf("component_selection\n"); }
         ;
 
 structured_statement:
@@ -305,42 +280,35 @@ structured_statement:
         |       IF expression THEN statement ELSE statement
         |       WHILE expression DO statement
         |       FOR ID ASSIGN expression TO expression DO statement
-//                { printf("structured_statement\n"); }
         ;
 
 procedure_statement:
                 ID LPAR actual_parameter_list RPAR
- //               { printf("procedure_statement\n"); }
         ;
 
 actual_parameter_list:
                 expression_list
         |       //Epsilon
-//                { printf("actual_parameter_list\n"); }
         ;
 
 expression_list:
                 expression_list COMMA expression
         |       expression
-//                { printf("expression_list\n"); }
         ;
 
 result_type:
                 ID
-//                {printf ("result_type\n"); }
         ;
 
 
 constant:
                 INTEGER
         |       sign INTEGER
- //               { printf("constant\n"); }
         ;
 
 expression:
                 simple_expression
         |       simple_expression relational_op simple_expression
-//                { printf("expression\n"); }
         ;
 
 relational_op:
@@ -350,27 +318,23 @@ relational_op:
         |       GEQ
         |       DIAMOND
         |       EQUALS
-//                { printf("relational_op\n"); }
         ;
 
 simple_expression:
                 term {$$ = $1;}
         |       sign term {$$ = $2;}
         |       simple_expression add_op term {$$ = $3;}
-//                {printf("simple_expression\n"); }
         ;
 
 add_op:
                 PLUS
         |       MINUS
         |       OR
-//                { printf("add_op\n"); }
         ;
 
 term:
                 factor {$$ = $1;}
         |       factor mul_op term {$$ = $1;}
-//                { printf("term\n"); }
         ;
 
 mul_op:
@@ -378,7 +342,6 @@ mul_op:
         |       DIV
         |       MOD
         |       AND
-//                { printf("mul_op\n"); }
         ;
 
 factor:
@@ -388,7 +351,6 @@ factor:
         |       function_reference { $$ = $1; }
         |       NOT factor { $$ = $2; }
         |       LPAR expression RPAR { $$ = $2; }
-//                { printf ("factor\n"); }
         ;
 
 function_reference:
@@ -416,13 +378,11 @@ variable:
 identifier_list:
                 identifier_list COMMA ID {insert_saved_symbol($3, saved_symbols);}
         |       ID {insert_saved_symbol($1, saved_symbols);}
-//                { printf("identifier_list\n"); }
         ;
 
 sign:
                 PLUS
         |       MINUS
-//                              { printf("sign\n"); }
         ;
 
 
@@ -457,13 +417,10 @@ int main(int argc, char** argv) {
     add_symbol_to_scope(symtab_root, create_root_type("ARRAY"));
     add_symbol_to_scope(symtab_root, create_root_type("RECORD"));
     add_symbol_to_scope(symtab_root, create_root_type("PROCEDURE"));
-    add_symbol_to_scope(symtab_root, create_root_type("FUNCTION"));
 
     add_symbol_to_scope(symtab_root, create_root_type("integer"));
     add_symbol_to_scope(symtab_root, create_root_type("string"));
     add_symbol_to_scope(symtab_root, create_root_type("boolean"));
- //   add_symbol_to_scope(symtab_root, create_root_type("true", "boolean"));
-//    add_symbol_to_scope(symtab_root, create_root_type("false", "boolean"));
 
     current_scope = symtab_root;
 

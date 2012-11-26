@@ -109,9 +109,9 @@ void print_symbol_table(void* rootscope) {
 int typecheck(symbol* type1, symbol* type2, scope* s) {
     // Total hack to allow for return values and other
     // language corner-cases
-   if (strcmp(type1->name, "FUNCTION") == 0) {
-        return 0;
-    }
+    //   if (strcmp(type1->name, "FUNCTION") == 0) {
+    //  return 0;
+    //}
    symbol* prim1 = reduce_type(type1);
    symbol* prim2 = reduce_type(type2);
    return strcmp(prim1->name, prim2->name);
