@@ -263,7 +263,7 @@ assignment_statement:
                 variable ASSIGN expression
                 {
                     if (typecheck($1, $3, current_scope) ) {
-                        printf("Incompatible type assignment %s, %s at line %d\n", $1->name, $3->name, yylineno);
+                        printf("WARNING: Incompatible type assignment %s, %s at line %d\n", $1->name, $3->name, yylineno);
                     }
                 }
         ;
@@ -358,9 +358,9 @@ function_reference:
                 {
                     if (!$1->type) {
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
-                        exit(-1);
+                        $1->type = lookup("UNKNOWN", symtab_root);
                         }
-                        $$ = $1->type;
+                    $$ = $1->type;
                 }
         ;
 
@@ -369,7 +369,7 @@ variable:
                 {
                     if (!$1->type) {
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
-                        exit(-1);
+                        $1->type = lookup("UNKNOWN", symtab_root);
                     }
                     $$ = $1->type;
                 }
@@ -418,6 +418,9 @@ int main(int argc, char** argv) {
     add_symbol_to_scope(symtab_root, create_root_type("RECORD"));
     add_symbol_to_scope(symtab_root, create_root_type("PROCEDURE"));
 
+    // Shim to allow for continued parsing after an undeclared reference
+    add_symbol_to_scope(symtab_root, create_root_type("UNKNOWN"));
+
     add_symbol_to_scope(symtab_root, create_root_type("integer"));
     add_symbol_to_scope(symtab_root, create_root_type("string"));
     add_symbol_to_scope(symtab_root, create_root_type("boolean"));
@@ -444,6 +447,7 @@ int main(int argc, char** argv) {
     } while (!feof(yyin));
 
     // Just for good measure and debugging, spit out the symbol table
+    printf("\nSYMBOL TABLE:\n");
     print_symbol_table(symtab_root);
 
     // Free globals

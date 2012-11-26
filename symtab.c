@@ -92,6 +92,9 @@ symbol* reduce_type(symbol*s) {
 }
 
 void print_symbol(void* sym) {
+    if (sym == NULL) {
+        return;
+    }
     symbol* s = (symbol*) sym;
     printf("%s: %s (reduces to %s)\n", s->name, s->type->name, reduce_type(s)->name);
 }

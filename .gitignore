@@ -2,3 +2,8 @@
 *.o
 *.yy.c
 *.pas
+*.tab.h
+*.output
+*.#*
+semantic_analyzer
+parser
