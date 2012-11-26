@@ -1,4 +1,4 @@
-CC	= clang
+CC	= gcc
 LEX     = flex
 YACC    = bison -y -d
 #RM	= rm
