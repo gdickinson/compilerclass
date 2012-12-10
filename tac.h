@@ -10,6 +10,7 @@ typedef struct quad {
   char* right;
 } quad;
 
+
 // Initialize the environment
 void init_tac();
 

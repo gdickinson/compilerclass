@@ -14,6 +14,7 @@
 #include <string.h>
 #include "symtab.h"
 #include "tac.h"
+#include "semrec.h"
 
 #define MAX_SAVED_SYMBOLS 20
 
@@ -29,16 +30,6 @@ typedef struct idlist {
     symbol *syms[MAX_SAVED_SYMBOLS];
     int cnt;
 } idlist;
-
-// Semantic Record
-typedef struct semrec {
-  int ival; // Literal integer value
-  char* sval; // Literal string value
-  int tru;
-  int fls;
-  symbol* type;
-  char* addr;
-} semrec;
 
 scope* symtab_root;
 scope* current_scope;
@@ -58,7 +49,7 @@ void process_saved_symbols(idlist* list, symbol* type);
   int ival;
   char* sval;
   symbol* sym;
-  struct semrec* semr;
+  semrec_t semr;
 }
 
 // Keywords
@@ -111,7 +102,7 @@ void process_saved_symbols(idlist* list, symbol* type);
 %token EQUALS
 
 // Value Types
-%token <ival> INTEGER
+%token <sval> INTEGER
 %token <sval> STRING
 %token <sym> ID
 
@@ -125,6 +116,12 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <semr> simple_expression
 %type <semr> function_reference
 %type <semr> term
+%type <sval> mul_op
+%type <sval> add_op
+%type <sval> constant
+%type <sval> sign
+%type <sval> relational_op
+
 
 %%
 
@@ -152,14 +149,14 @@ type_definitions_list:
 
 type_definition:
                 ID EQUALS type SEMIC
-                { $1->type = $3->type;}
+                { $1->type = $3.type;}
         ;
 
 type:
-                ID {$$->type = $1->type;}
-        |       ARRAY OF type {$$->type = lookup("ARRAY", symtab_root);}
-        |       ARRAY LBKT constant DOUBLEDOT constant RBKT OF type {$$->type = lookup("ARRAY", symtab_root);}
-        |       RECORD field_list END {$$->type = lookup("RECORD", symtab_root);}
+                ID {$$.type = $1->type;}
+        |       ARRAY OF type {$$.type = lookup("ARRAY", symtab_root);}
+        |       ARRAY LBKT constant DOUBLEDOT constant RBKT OF type {$$.type = lookup("ARRAY", symtab_root);}
+        |       RECORD field_list END {$$.type = lookup("RECORD", symtab_root);}
         ;
 
 field_list:
@@ -182,7 +179,7 @@ variable_declarations_list:
 
 variable_declaration:
                 identifier_list COLON type SEMIC
-                { process_saved_symbols(saved_symbols, $3->type);
+                { process_saved_symbols(saved_symbols, $3.type);
                   reset_saved_symbols(saved_symbols); }
         ;
 
@@ -225,7 +222,7 @@ function_declaration:
                 {current_scope = create_scope(current_scope);}
                 LPAR
                 formal_parameters RPAR COLON result_type SEMIC
-                { $2->type = $8->type; }
+                { $2->type = $8.type; }
                 block_or_forward
                 {
                 reset_saved_symbols(saved_symbols);
@@ -244,7 +241,7 @@ formal_parameter_list:
 
 formal_parameter:
                 identifier_list COLON type
-                { process_saved_symbols(saved_symbols, $3->type); }
+                { process_saved_symbols(saved_symbols, $3.type); }
         ;
 
 compound_statement:
@@ -274,9 +271,12 @@ simple_statement:
 assignment_statement:
                 variable ASSIGN expression
                 {
-                    if (typecheck($1->type, $3->type, current_scope) ) {
-                        printf("WARNING: Incompatible type assignment %s, %s at line %d\n", $1->type->name, $3->type->name, yylineno);
+                   if (typecheck($1.type, $3.type, current_scope) ) {
+                        printf("WARNING: Incompatible type assignment %s, %s at line %d\n", $1.type->name, $3.type->name, yylineno);
                     }
+
+                    // TAC Generation
+                    gen($1.addr, $3.addr, NULL, NULL);
                 }
         ;
 
@@ -309,27 +309,27 @@ expression_list:
         ;
 
 result_type:
-                ID
+                ID { $$.type = $1->type; }
         ;
 
 
 constant:
-                INTEGER
-        |       sign INTEGER
+                INTEGER { $$ = $1; }
+        |       sign INTEGER { sprintf($$, "%s%s", $1, $2); }
         ;
 
 expression:
-                simple_expression
-        |       simple_expression relational_op simple_expression
+                simple_expression { $$.addr = $1.addr; }
+        |       simple_expression relational_op simple_expression { $$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr);  }
         ;
 
 relational_op:
-                LESSTHAN
-        |       GREATERTHAN
-        |       LEQ
-        |       GEQ
-        |       DIAMOND
-        |       EQUALS
+                LESSTHAN { $$ = "<"; }
+        |       GREATERTHAN { $$ = ">"; }
+        |       LEQ { $$ = "<="; }
+        |       GEQ { $$ = ">="; }
+        |       DIAMOND { $$ = "<>"; }
+        |       EQUALS { $$ = "="; }
         ;
 
 simple_expression:
@@ -339,30 +339,30 @@ simple_expression:
         ;
 
 add_op:
-                PLUS
-        |       MINUS
-        |       OR
+                PLUS { $$ = "+"; }
+        |       MINUS {$$ = "-";}
+        |       OR { $$ = "or";}
         ;
 
 term:
                 factor {$$ = $1;}
-        |       factor mul_op term {$$ = $1;}
+        |       factor mul_op term {$$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr); }
         ;
 
 mul_op:
-                MULTIPLY
-        |       DIV
-        |       MOD
-        |       AND
+                MULTIPLY {$$ = "*";}
+        |       DIV {$$ = "/";}
+        |       MOD {$$ = "%";}
+        |       AND {$$ = "and";}
         ;
 
 factor:
-                INTEGER { $$->type = lookup("integer", symtab_root); }
-        |       STRING { $$->type = lookup("string", symtab_root); }
-        |       variable { $$->type = $1->type;  }
-        |       function_reference { $$->type = $1->type; }
-        |       NOT factor { $$->type = $2->type; }
-        |       LPAR expression RPAR { $$->type = $2->type; }
+                INTEGER { $$.type = lookup("integer", symtab_root); $$.addr = $1;}
+        |       STRING { $$.type = lookup("string", symtab_root); $$.addr = $1;}
+        |       variable { $$.type = $1.type; $$.addr = $1.addr;}
+        |       function_reference { $$.type = $1.type; $$.addr = "TODOFUN";} //TODO
+        |       NOT factor { $$.type = $2.type; $$.addr = "TODONOT";} //TODO
+        |       LPAR expression RPAR { $$.type = $2.type; $$.addr = $2.addr;} //TODO
         ;
 
 function_reference:
@@ -372,7 +372,7 @@ function_reference:
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                         }
-                    $$->type = $1->type;
+                    $$.type = $1->type;
                 }
         ;
 
@@ -383,7 +383,8 @@ variable:
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                     }
-                    $$->type = $1->type;
+                    $$.type = $1->type;
+                    $$.addr = "TODO";
                 }
         ;
 
@@ -393,8 +394,8 @@ identifier_list:
         ;
 
 sign:
-                PLUS
-        |       MINUS
+                PLUS { $$ = "+"; }
+        |       MINUS { $$ = "-"; }
         ;
 
 
@@ -460,8 +461,9 @@ int main(int argc, char** argv) {
     } while (!feof(yyin));
 
     // Just for good measure and debugging, spit out the symbol table
-    printf("\nSYMBOL TABLE:\n");
-    print_symbol_table(symtab_root);
+    //printf("\nSYMBOL TABLE:\n");
+    //print_symbol_table(symtab_root);
+    print_tac();
 
     // Free globals
     free(symtab_root);

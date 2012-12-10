@@ -58,11 +58,10 @@ scope* create_scope(scope* parent) {
         return s;
     }
 
-    if (parent->children == NULL) {
-        parent->children = list_create(s);
-    } else {
-        list_append(parent->children, s);
-    }
+    //if (parent->children == NULL)
+        //    parent->children = list_create(s);
+    //} else {
+    list_append(parent->children, s);
     s->children = NULL;
     return s;
 }
@@ -73,6 +72,7 @@ symbol* create_symbol(char* name) {
         return NULL;
     }
     m->name = strdup(name);
+    m->type = NULL;
     return m;
 }
 

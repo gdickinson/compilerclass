@@ -5,6 +5,8 @@
 * lex.l : Flex specification
 * parser.y : Parser specification
 * symtab.[c|h] : Utility functions (with header) for manipulating a simple symbol table
+* linkedlist.[c|h]: Utility functions for manipulating linked lists, for space-efficient
+  symbol lists
 * Makefile : A Makefile (of course).
 
 ## Compiling the project:
@@ -37,3 +39,5 @@ as an UNKNOWN type which supports continued parsing after referencing an undecla
 has the interesting side-effect that the language actually supports implicit definitions, made
 possible by insertion of symbols into the symbol table by the lexer, not the parser.
 * We continue parsing right to the end, unless we encounter a fatal parsing or lexing error.
+* Type checking is done by reducing everything to primitive types. Not the fastest, but the easiest
+to implement.

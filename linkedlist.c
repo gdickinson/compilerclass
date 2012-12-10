@@ -1,5 +1,6 @@
 #include "linkedlist.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 node* list_create(void* data) {
     node* n;
@@ -20,6 +21,11 @@ node* list_insert(node* n, void* data) {
 }
 
 node* list_append(node* n, void* data) {
+    if (n == NULL) {
+        n = list_create(data);
+        return n;
+    }
+
     while (n->next != NULL) {
         n = n->next;
     }

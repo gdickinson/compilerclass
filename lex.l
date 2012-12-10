@@ -10,7 +10,9 @@ Fall, 2012
 #include <stdio.h>
 #include <stdlib.h>
 #include "symtab.h"
+#include "semrec.h"
 #include "parser.tab.h"
+
 int line = 1;
 extern scope* symtab_root;
 extern scope* current_scope;
@@ -85,7 +87,7 @@ while                       {return WHILE;}
 \[                          {return LBKT;}
 \]                          {return RBKT;}
 
-{INTEGER}                   {yylval.ival = atoi(yytext); return INTEGER;}
+{INTEGER}                   {yylval.sval = yytext; return INTEGER;}
 \".*\"                      {yylval.sval = yytext; return STRING;}
 {ID}                        {yylval.sym = lookup(yytext, current_scope);
                              return ID;}
