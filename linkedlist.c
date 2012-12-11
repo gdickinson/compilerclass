@@ -22,6 +22,7 @@ node* list_insert(node* n, void* data) {
 
 node* list_append(node* n, void* data) {
     if (n == NULL) {
+        printf("creating new list because append called on null\n");
         n = list_create(data);
         return n;
     }

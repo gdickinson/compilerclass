@@ -11,13 +11,17 @@ void init_tac() {
 }
 
 quad* gen(char* dest, char* left, char* op, char* right) {
-    printf("Calling gen(%s, %s)\n", dest, left);
   quad* q = (quad*) malloc(sizeof(quad));
   if (dest != NULL) { q->dest = strdup(dest); }
   if (left != NULL) { q->left = strdup(left); }
   if (op != NULL) { q->op = strdup(op); }
   if (right != NULL) { q->right = strdup(right); }
-  list_append(quads, q);
+
+  if (quads == NULL) {
+    quads = list_create(q);
+  } else {
+    list_append(quads, q);
+  }
   return q;
 }
 
@@ -34,6 +38,5 @@ void print_code(void* v) {
 }
 
 void print_tac() {
-    printf("Print things!\n");
-    list_foreach(quads, print_code);
+    list_foreach(quads, &print_code);
 }

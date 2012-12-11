@@ -333,9 +333,9 @@ relational_op:
         ;
 
 simple_expression:
-                term {$$ = $1;}
+                term {$$.addr = $1.addr; printf("%s\n", $1.addr);}
         |       sign term {$$ = $2;}
-        |       simple_expression add_op term {$$ = $3;}
+        |       simple_expression add_op term {$$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr);}
         ;
 
 add_op:
@@ -345,7 +345,7 @@ add_op:
         ;
 
 term:
-                factor {$$ = $1;}
+                factor {$$.addr = $1.addr; }
         |       factor mul_op term {$$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr); }
         ;
 
@@ -357,8 +357,8 @@ mul_op:
         ;
 
 factor:
-                INTEGER { $$.type = lookup("integer", symtab_root); $$.addr = $1;}
-        |       STRING { $$.type = lookup("string", symtab_root); $$.addr = $1;}
+                INTEGER { $$.type = lookup("integer", symtab_root); $$.addr = strdup($1);}
+        |       STRING { $$.type = lookup("string", symtab_root); $$.addr = strdup($1);}
         |       variable { $$.type = $1.type; $$.addr = $1.addr;}
         |       function_reference { $$.type = $1.type; $$.addr = "TODOFUN";} //TODO
         |       NOT factor { $$.type = $2.type; $$.addr = "TODONOT";} //TODO
@@ -384,7 +384,8 @@ variable:
                         $1->type = lookup("UNKNOWN", symtab_root);
                     }
                     $$.type = $1->type;
-                    $$.addr = "TODO";
+                    $$.addr = $1->name;
+                        // TODO Look this up!
                 }
         ;
 
