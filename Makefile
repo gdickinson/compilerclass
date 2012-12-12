@@ -6,6 +6,10 @@ YACC    = bison -y -d
 semantic_analyzer: symtab.o parser.tab.o linkedlist.o tac.o lex.yy.c
 	$(CC) -o $@ $?
 
+semrec.o: tac.o linkedlist.o
+
+tac.o: linkedlist.o
+
 lex.yy.c: parser.tab.h
 
 %.o: %.c

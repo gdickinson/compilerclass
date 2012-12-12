@@ -4,10 +4,12 @@
 #include "tac.h"
 
 int current_temp;
+int current_label;
 node* quads;
 
 void init_tac() {
   current_temp = 0;
+  current_label = 0;
 }
 
 quad* gen(char* dest, char* left, char* op, char* right) {
@@ -39,4 +41,11 @@ void print_code(void* v) {
 
 void print_tac() {
     list_foreach(quads, &print_code);
+}
+
+char* nextlabel() {
+    char* ret;
+    ret = malloc(snprintf(NULL, 0, "L%d", current_label) + 1);
+    sprintf(ret, "L%d", ++current_label);
+    return ret;
 }

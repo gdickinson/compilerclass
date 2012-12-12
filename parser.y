@@ -36,6 +36,8 @@ scope* current_scope;
 
 idlist* saved_symbols;
 
+char* last_id;
+
 void insert_saved_symbol(symbol* sym, idlist* list);
 void reset_saved_symbols(idlist* list);
 void process_saved_symbols(idlist* list, symbol* type);
@@ -121,6 +123,7 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <sval> constant
 %type <sval> sign
 %type <sval> relational_op
+%type <semr> component_selection
 
 
 %%
@@ -134,7 +137,7 @@ program:
                 subprogram_declarations
                 compound_statement
                 DOT
-                {   $2->type = lookup("PROGRAM", symtab_root);}
+                {   $2->type = lookup("PROGRAM", symtab_root); }
 ;
 
 type_definitions:
@@ -281,7 +284,14 @@ assignment_statement:
         ;
 
 component_selection:
-                DOT ID
+                DOT ID component_selection
+                {
+                    $$.addr = temp();
+                    char* v;
+                    asprintf(&v, "%s.%s", last_id, $3.addr);
+                    last_id = strdup($$.addr);
+                    gen($$.addr, v, NULL, NULL);
+                }
         |       LBKT expression RBKT component_selection
         |       // Epsilon
         ;
@@ -289,6 +299,8 @@ component_selection:
 structured_statement:
                 compound_statement
         |       IF expression THEN statement
+                //                { $$.tru = nextlabel(); $$.fls = $4.next; $$.code =  }
+
         |       IF expression THEN statement ELSE statement
         |       WHILE expression DO statement
         |       FOR ID ASSIGN expression TO expression DO statement
@@ -315,7 +327,7 @@ result_type:
 
 constant:
                 INTEGER { $$ = $1; }
-        |       sign INTEGER { sprintf($$, "%s%s", $1, $2); }
+        |       sign INTEGER { $$ = malloc(strlen($2)+2); sprintf($$, "%s%s", $1, $2); }
         ;
 
 expression:
@@ -377,15 +389,19 @@ function_reference:
         ;
 
 variable:
-                ID component_selection
+
+        ID
+        { last_id = strdup($1->name); }
+        component_selection
                 {
                     if (!$1->type) {
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                     }
                     $$.type = $1->type;
-                    $$.addr = $1->name;
-                        // TODO Look this up!
+                    $$.addr = temp();
+
+                    gen($$.addr, $3.addr, NULL, NULL);
                 }
         ;
 
