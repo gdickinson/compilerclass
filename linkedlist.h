@@ -16,4 +16,7 @@ void list_foreach(node* n, void(*func)(void*));
 
 node* list_search(node* n, int(*func)(void*, void*), void* target);
 
+// Merge two lists
+node* list_merge(node* a, node* b);
+
 #endif

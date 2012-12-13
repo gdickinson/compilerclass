@@ -58,10 +58,11 @@ scope* create_scope(scope* parent) {
         return s;
     }
 
-    //if (parent->children == NULL)
-        //    parent->children = list_create(s);
-    //} else {
-    list_append(parent->children, s);
+    if (parent->children == NULL) {
+      parent->children = list_create(s);
+    } else {
+      list_append(parent->children, s);
+    }
     s->children = NULL;
     return s;
 }

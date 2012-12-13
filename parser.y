@@ -128,6 +128,14 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <semr> structured_statement
 %type <semr> simple_statement
 %type <semr> assignment_statement
+%type <semr> function_declaration
+%type <semr> block_or_forward
+%type <semr> block
+%type <semr> compound_statement
+%type <semr> variable_declarations
+%type <semr> subprogram_declarations
+%type <semr> program
+%type <semr> statement_sequence
 
 
 %%
@@ -141,7 +149,11 @@ program:
                 subprogram_declarations
                 compound_statement
                 DOT
-                {   $2->type = lookup("PROGRAM", symtab_root); }
+                {   $2->type = lookup("PROGRAM", symtab_root);
+                    $$.code = $7.code;
+                    list_merge($$.code, $8.code);
+                    print_tac($$.code);
+                }
 ;
 
 type_definitions:
@@ -207,8 +219,8 @@ subprogram_declaration:
         ;
 
 block:
-                variable_declarations compound_statement
-        |       compound_statement
+                variable_declarations compound_statement { $$ = $2; }
+        |       compound_statement { $$ = $1; }
         ;
 
 procedure_declaration:
@@ -219,21 +231,29 @@ procedure_declaration:
         ;
 
 block_or_forward:
-                block
-         |      FORWARD
+                block { }
+         |      FORWARD { }
          ;
 
 function_declaration:
                 FUNCTION
                 ID
-                {current_scope = create_scope(current_scope);}
+                {
+                    current_scope = create_scope(current_scope);
+                }
                 LPAR
                 formal_parameters RPAR COLON result_type SEMIC
-                { $2->type = $8.type; }
+                { $2->type = $8.type;
+
+                  $2->label = nextlabel();}
                 block_or_forward
                 {
                 reset_saved_symbols(saved_symbols);
-                current_scope = current_scope->parent;}
+                current_scope = current_scope->parent;
+                gen2($2->label, ":", &($$.code));
+                list_merge($$.code, $11.code);
+                gen2("return", $2->name, &($$.code));
+                }
         ;
 
 formal_parameters:
@@ -257,18 +277,23 @@ compound_statement:
                 statement_sequence
                 {current_scope = current_scope->parent;}
                 END
+                { $$ = $3; }
         ;
 
 statement_sequence:
-                statement_sequence SEMIC statement
-        |       statement
+               statement_sequence SEMIC statement
+               {
+                   $$.code = $1.code;
+                   list_merge($$.code, $3.code); // Dupes???
+               }
+|       statement { $$ = $1; } // XXX: Produces duplicates ?
         ;
 
 statement:
                 simple_statement {}
         |       structured_statement
         {
-            $1.next = nextlabel();
+            //$1.next = nextlabel();
             //printf("statement: %s\n%s: ", $1.code, $1.next);
         }
         ;
@@ -291,7 +316,6 @@ assignment_statement:
                    char* c;
                    asprintf(&c, "%s = %s", $1.addr, $3.addr);
                    gen(c, &($$.code));
-                   print_tac($$.code);
                 }
         ;
 
@@ -420,7 +444,7 @@ factor:
                 INTEGER { $$.type = lookup("integer", symtab_root); $$.addr = strdup($1);}
         |       STRING { $$.type = lookup("string", symtab_root); $$.addr = strdup($1);}
         |       variable { $$.type = $1.type; $$.addr = $1.addr;}
-        |       function_reference { $$.type = $1.type; $$.addr = "TODOFUN";} //TODO
+        |       function_reference { $$.type = $1.type; $$.code = $1.code;}
         |       NOT factor { $$.type = $2.type; $$.addr = "TODONOT";} //TODO
         |       LPAR expression RPAR { $$.type = $2.type; $$.addr = $2.addr;} //TODO
         ;
@@ -429,10 +453,12 @@ function_reference:
                 ID LPAR actual_parameter_list RPAR
                 {
                     if (!$1->type) {
-                        printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
+                        printf("WARNING: function %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                         }
                     $$.type = $1->type;
+                    $$.addr = temp();
+                    gen4($$.addr, "=", "funcall", $1->label, &($$.code));
                 }
         ;
 

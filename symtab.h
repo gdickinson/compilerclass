@@ -11,6 +11,7 @@
 typedef struct symbol {
     char* name;
     struct symbol* type;
+    char* label;
 } symbol;
 
 // Scopes contain a pointer to their parent (for efficient upward searching),
