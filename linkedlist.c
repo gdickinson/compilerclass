@@ -22,7 +22,6 @@ node* list_insert(node* n, void* data) {
 
 node* list_append(node* n, void* data) {
     if (n == NULL) {
-        printf("creating new list because append called on null\n");
         n = list_create(data);
         return n;
     }
@@ -50,3 +49,10 @@ node* list_search(node* n, int (*func)(void*, void*), void* target) {
     return NULL;
 }
 
+node* list_merge(node* a, node* b) {
+    while (b != NULL) {
+        list_append(a, b->data);
+        b = b->next;
+    }
+    return a;
+}

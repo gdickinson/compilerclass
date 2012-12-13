@@ -3,8 +3,10 @@ LEX     = flex
 YACC    = bison -y -d
 #RM	= rm
 
-semantic_analyzer: symtab.o parser.tab.o linkedlist.o tac.o lex.yy.c
+semantic_analyzer: symtab.o parser.tab.o linkedlist.o tac.o semrec.o tac.o lex.yy.c
 	$(CC) -o $@ $?
+
+parser.tab.o: semrec.o tac.o
 
 semrec.o: tac.o linkedlist.o
 

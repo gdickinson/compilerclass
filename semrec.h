@@ -13,8 +13,8 @@ typedef struct semrec_t {
   symbol* type;
   char* addr;
   node* code;
+  char* next;
 } semrec_t;
 
-void append_code(node* n, quad* q);
 
 #endif

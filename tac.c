@@ -1,51 +1,96 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include "tac.h"
+#include "linkedlist.h"
 
 int current_temp;
+// Counter for label generation
 int current_label;
-node* quads;
+
+// Label to be attached to next instruction
+int next_label;
+
+//node* quads;
 
 void init_tac() {
   current_temp = 0;
   current_label = 0;
+  next_label = -1;
 }
 
-quad* gen(char* dest, char* left, char* op, char* right) {
-  quad* q = (quad*) malloc(sizeof(quad));
-  if (dest != NULL) { q->dest = strdup(dest); }
-  if (left != NULL) { q->left = strdup(left); }
-  if (op != NULL) { q->op = strdup(op); }
-  if (right != NULL) { q->right = strdup(right); }
+char* gen(char* code, node** n) {
+    if (*n == NULL) {
+        *n = list_create(code);
+    } else {
+        list_append(*n, code);
+    }
+    return code;
+}
 
-  if (quads == NULL) {
-    quads = list_create(q);
-  } else {
-    list_append(quads, q);
-  }
-  return q;
+char* gen2(char* s1, char* s2, node** n) {
+    char* c;
+    asprintf(&c, "%s %s", s1, s2);
+    gen(c, n);
+    return c;
+}
+
+char* gen3(char* s1, char* s2, char* s3, node** n) {
+    char* c;
+    asprintf(&c, "%s %s %s", s1, s2, s3);
+    gen(c, n);
+    return c;
+}
+
+char* gen4(char* s1, char* s2, char* s3, char* s4, node** n) {
+    char* c;
+    asprintf(&c, "%s %s %s %s", s1, s2, s3, s4);
+    gen(c, n);
+    return c;
+}
+
+char* gen5(char* s1, char* s2, char* s3, char* s4, char* s5, node** n) {
+    char* c;
+    asprintf(&c, "%s %s %s %s %s", s1, s2, s3, s4, s5);
+    gen(c, n);
+    return c;
 }
 
 char* temp() {
-  // Safety first
   char* s = malloc(snprintf(NULL, 0, "t%d", current_temp) + 1);
   sprintf(s, "t%d", ++current_temp);
   return s;
 }
 
-void print_code(void* v) {
-    quad* q = (quad*) v;
-    printf("%s = %s %s %s\n", q->dest, q->left, q->op, q->right);
+void print_code(char* code) {
+    printf("%s\n", code);
 }
 
-void print_tac() {
-    list_foreach(quads, &print_code);
+void print_node(void* v) {
+    char* c = (char*) v;
+    print_code(c);
+}
+
+void print_tac(node* n) {
+    if (n == NULL) { printf("print_tac called on null\n"); }
+    list_foreach(n, print_node);
 }
 
 char* nextlabel() {
-    char* ret;
-    ret = malloc(snprintf(NULL, 0, "L%d", current_label) + 1);
-    sprintf(ret, "L%d", ++current_label);
-    return ret;
+    char b[10];
+    sprintf(b, "L%d", ++current_label);
+    return strdup(b);
+}
+
+void append_code(char* code, node* n) {
+    if (n == NULL) {
+        n = list_create(code);
+    } else {
+        list_append(n, code);
+    }
+}
+
+void label(int l) {
+    next_label = l;
 }

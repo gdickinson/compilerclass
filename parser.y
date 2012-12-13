@@ -124,6 +124,10 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <sval> sign
 %type <sval> relational_op
 %type <semr> component_selection
+%type <semr> statement
+%type <semr> structured_statement
+%type <semr> simple_statement
+%type <semr> assignment_statement
 
 
 %%
@@ -261,8 +265,12 @@ statement_sequence:
         ;
 
 statement:
-                simple_statement
+                simple_statement {}
         |       structured_statement
+        {
+            $1.next = nextlabel();
+            //printf("statement: %s\n%s: ", $1.code, $1.next);
+        }
         ;
 
 simple_statement:
@@ -278,28 +286,40 @@ assignment_statement:
                         printf("WARNING: Incompatible type assignment %s, %s at line %d\n", $1.type->name, $3.type->name, yylineno);
                     }
 
-                    // TAC Generation
-                    gen($1.addr, $3.addr, NULL, NULL);
+                    // TAC
+                   $$.code = $3.code;
+                   char* c;
+                   asprintf(&c, "%s = %s", $1.addr, $3.addr);
+                   gen(c, &($$.code));
+                   print_tac($$.code);
                 }
         ;
 
 component_selection:
                 DOT ID component_selection
                 {
-                    $$.addr = temp();
-                    char* v;
-                    asprintf(&v, "%s.%s", last_id, $3.addr);
-                    last_id = strdup($$.addr);
-                    gen($$.addr, v, NULL, NULL);
+                    //$$.addr = temp();
+                    //char* v;
+                    //asprintf(&v, "%s.%s", last_id, $3.addr);
+                    //                    last_id = strdup($$.addr);
+                    //gen($$.addr, v, NULL, NULL);
+                    //todo
                 }
-        |       LBKT expression RBKT component_selection
-        |       // Epsilon
+        |       LBKT expression RBKT component_selection {}
+        |       {}// Epsilon
         ;
 
 structured_statement:
                 compound_statement
         |       IF expression THEN statement
-                //                { $$.tru = nextlabel(); $$.fls = $4.next; $$.code =  }
+                {
+                    $2.tru = nextlabel();
+                    $2.fls = $$.next;
+                    $4.next = $$.next;
+                    $$.code = malloc(512);
+                    //printf("$$.next is %s\n", $$.next);
+                    //sprintf($$.code, "structured: %s\n%s: %s\n", $2.code, $2.fls, $4.code);
+                }
 
         |       IF expression THEN statement ELSE statement
         |       WHILE expression DO statement
@@ -331,8 +351,15 @@ constant:
         ;
 
 expression:
-                simple_expression { $$.addr = $1.addr; }
-        |       simple_expression relational_op simple_expression { $$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr);  }
+                simple_expression { $$ = $1; }
+        |       simple_expression relational_op simple_expression
+                {
+                    //$$.addr = temp();
+                    //gen($$.addr, $1.addr, $2, $3.addr);
+                    //printf("In exp\n");
+                    //$$.code = "if derp > herp goto someplace\n";
+                    //printf("$$.tru is %s\n", $$.tru);
+                }
         ;
 
 relational_op:
@@ -345,9 +372,24 @@ relational_op:
         ;
 
 simple_expression:
-                term {$$.addr = $1.addr; printf("%s\n", $1.addr);}
-        |       sign term {$$ = $2;}
-        |       simple_expression add_op term {$$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr);}
+                term { $$ = $1; }
+
+        |       sign term
+        {
+            $$.addr = temp();
+            $$.code = $2.code;
+            char* c;
+            asprintf(&c, "%s = %s%s", $$.addr, $1, $2.addr);
+            gen4($$.addr, "=", $1, $2.addr, &($$.code));
+        }
+
+        |       simple_expression add_op term
+        {
+            $$.addr = temp();
+            $$.code = $1.code;
+            list_append($1.code, $3.code);
+            gen5($$.addr, "=", $1.addr, $2, $3.addr, &($$.code));
+        }
         ;
 
 add_op:
@@ -358,7 +400,13 @@ add_op:
 
 term:
                 factor {$$.addr = $1.addr; }
-        |       factor mul_op term {$$.addr = temp(); gen($$.addr, $1.addr, $2, $3.addr); }
+        |       factor mul_op term
+        {
+            $$.addr = temp();
+            $$.code = $1.code;
+            list_merge($$.code, $3.code);
+            gen5($$.addr, "=", $1.addr, $2, $3.addr, &($$.code));
+        }
         ;
 
 mul_op:
@@ -391,17 +439,14 @@ function_reference:
 variable:
 
         ID
-        { last_id = strdup($1->name); }
         component_selection
                 {
                     if (!$1->type) {
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                     }
+                    $$.addr = $1->name;
                     $$.type = $1->type;
-                    $$.addr = temp();
-
-                    gen($$.addr, $3.addr, NULL, NULL);
                 }
         ;
 
@@ -480,7 +525,7 @@ int main(int argc, char** argv) {
     // Just for good measure and debugging, spit out the symbol table
     //printf("\nSYMBOL TABLE:\n");
     //print_symbol_table(symtab_root);
-    print_tac();
+    //print_tac();
 
     // Free globals
     free(symtab_root);
