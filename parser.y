@@ -320,6 +320,7 @@ assignment_statement:
 
                     // TAC
                    $$.code = $3.code;
+                   list_merge($$.code, $1.code);
                    gen3($1.addr, "=", $3.addr, &($$.code));
                 }
         ;
@@ -327,6 +328,11 @@ assignment_statement:
 component_selection:
                 DOT ID component_selection
                 {
+
+                    //                    $$.code = $3.code;
+                    //$3.addr = temp();
+                    //gen3($$.addr, "=", $3.addr, &($$.code));
+
                     //$$.addr = temp();
                     //char* v;
                     //asprintf(&v, "%s.%s", last_id, $3.addr);
@@ -507,16 +513,28 @@ function_reference:
 
 variable:
 
-        ID
-        component_selection
+          ID DOT ID
                 {
                     if (!$1->type) {
                         printf("WARNING: %s referenced without declaration at line %d\n", $1->name, yylineno);
                         $1->type = lookup("UNKNOWN", symtab_root);
                     }
-                    $$.addr = $1->name;
+                    asprintf(&$$.addr, "%s.%s", $1->name, $3->name);
                     $$.type = $1->type;
                 }
+
+        | ID LBKT expression RBKT
+        {
+            $$.type = $1->type;
+            $$.code = $3.code;
+            asprintf(&$$.addr, "%s[%s]", $1->name, $3.addr);
+        }
+
+        | ID
+        {
+            $$.addr = $1->name;
+            $$.type = $1->type;
+        }
         ;
 
 identifier_list:
