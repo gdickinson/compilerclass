@@ -362,6 +362,16 @@ structured_statement: //TODO
         }
 
         |       WHILE expression DO statement
+        {
+            $$.next = nextlabel();
+            $$.tru = nextlabel();
+            gen2($$.tru, ":", &($$.code));
+            list_merge($$.code, $2.code);
+            gen4("ifFalse", $2.addr, "GOTO", $$.next, &($$.code));
+            list_merge($$.code, $4.code);
+            gen2("GOTO", $$.tru, &($$.code));
+            gen2($$.next, ":", &($$.code));
+        }
         |       FOR ID ASSIGN expression TO expression DO statement
         ;
 
