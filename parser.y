@@ -132,10 +132,11 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <semr> block_or_forward
 %type <semr> block
 %type <semr> compound_statement
-%type <semr> variable_declarations
 %type <semr> subprogram_declarations
 %type <semr> program
 %type <semr> statement_sequence
+%type <semr> expression_list
+%type <semr> actual_parameter_list
 
 
 %%
@@ -231,7 +232,7 @@ procedure_declaration:
         ;
 
 block_or_forward:
-                block { }
+                block { $$ = $1; }
          |      FORWARD { }
          ;
 
@@ -286,7 +287,7 @@ statement_sequence:
                    $$.code = $1.code;
                    list_merge($$.code, $3.code); // Dupes???
                }
-|       statement { $$ = $1; } // XXX: Produces duplicates ?
+        |       statement { $$ = $1; } // XXX: Produces duplicates ?
         ;
 
 statement:
@@ -333,7 +334,7 @@ component_selection:
         |       {}// Epsilon
         ;
 
-structured_statement:
+structured_statement: //TODO
                 compound_statement
         |       IF expression THEN statement
                 {
@@ -360,8 +361,14 @@ actual_parameter_list:
         ;
 
 expression_list:
-                expression_list COMMA expression
-        |       expression
+expression COMMA expression_list {$$.code = $1.code; list_merge($$.code, $3.code); }
+                |       expression
+                {
+                    $$.addr = temp();
+                    $$.code = $1.code;
+                    gen3($$.addr, "=", $1.addr, &$$.code);
+                    gen2("param", $$.addr, &$$.code);
+                }
         ;
 
 result_type:
@@ -443,10 +450,10 @@ mul_op:
 factor:
                 INTEGER { $$.type = lookup("integer", symtab_root); $$.addr = strdup($1);}
         |       STRING { $$.type = lookup("string", symtab_root); $$.addr = strdup($1);}
-        |       variable { $$.type = $1.type; $$.addr = $1.addr;}
+        |       variable { $$.type = $1.type; $$.addr = $1.addr; $$.code = $1.code;}
         |       function_reference { $$.type = $1.type; $$.code = $1.code;}
-        |       NOT factor { $$.type = $2.type; $$.addr = "TODONOT";} //TODO
-        |       LPAR expression RPAR { $$.type = $2.type; $$.addr = $2.addr;} //TODO
+        |       NOT factor { $$.type = $2.type; $$.addr = $2.addr; $$.code = $2.code;}
+        |       LPAR expression RPAR { $$.type = $2.type; $$.addr = $2.addr; $$.code = $2.code;}
         ;
 
 function_reference:
@@ -458,6 +465,7 @@ function_reference:
                         }
                     $$.type = $1->type;
                     $$.addr = temp();
+                    $$.code = $3.code;
                     gen4($$.addr, "=", "funcall", $1->label, &($$.code));
                 }
         ;
@@ -547,11 +555,6 @@ int main(int argc, char** argv) {
     do {
         yyparse();
     } while (!feof(yyin));
-
-    // Just for good measure and debugging, spit out the symbol table
-    //printf("\nSYMBOL TABLE:\n");
-    //print_symbol_table(symtab_root);
-    //print_tac();
 
     // Free globals
     free(symtab_root);
