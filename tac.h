@@ -21,6 +21,7 @@ char* gen2(char* s1, char* s2, node** n);
 char* gen3(char* s1, char* s2, char* s3, node** n);
 char* gen4(char* s1, char* s2, char* s3, char* s4, node** n);
 char* gen5(char* s1, char* s2, char* s3, char* s4, char* s5, node** n);
+char* gen6(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, node** n);
 
 // Generate a temporary address
 char* temp();
