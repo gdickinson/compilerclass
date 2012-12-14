@@ -319,8 +319,12 @@ assignment_statement:
                     }
 
                     // TAC
-                   $$.code = $3.code;
-                   list_merge($$.code, $1.code);
+                   $$.code = $1.code;
+                   if ($$.code == NULL) {
+                       $$.code = $3.code;
+                   } else {
+                       list_merge($$.code, $3.code);
+                   }
                    gen3($1.addr, "=", $3.addr, &($$.code));
                 }
         ;
@@ -459,7 +463,7 @@ simple_expression:
         {
             $$.addr = temp();
             $$.code = $1.code;
-            list_append($1.code, $3.code);
+            list_merge($1.code, $3.code);
             gen5($$.addr, "=", $1.addr, $2, $3.addr, &($$.code));
         }
         ;
