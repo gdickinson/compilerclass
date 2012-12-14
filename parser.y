@@ -282,12 +282,12 @@ compound_statement:
         ;
 
 statement_sequence:
-               statement_sequence SEMIC statement
-               {
+                statement SEMIC statement_sequence
+                {
                    $$.code = $1.code;
                    list_merge($$.code, $3.code); // Dupes???
                }
-        |       statement { $$ = $1; } // XXX: Produces duplicates ?
+        |       statement  { $$ = $1; } // XXX: Produces duplicates ?
         ;
 
 statement:
@@ -534,6 +534,9 @@ int main(int argc, char** argv) {
     add_symbol_to_scope(symtab_root, create_root_type("integer"));
     add_symbol_to_scope(symtab_root, create_root_type("string"));
     add_symbol_to_scope(symtab_root, create_root_type("boolean"));
+
+    add_symbol_to_scope(symtab_root, create_symbol_with_type("true", lookup("boolean", symtab_root)));
+    add_symbol_to_scope(symtab_root, create_symbol_with_type("false", lookup("boolean", symtab_root)));
 
     current_scope = symtab_root;
 
