@@ -1,9 +1,9 @@
-CC	= clang -g -Wall
+CC	= gcc
 LEX     = flex
 YACC    = bison -y -d
 #RM	= rm
 
-semantic_analyzer: symtab.o parser.tab.o linkedlist.o tac.o semrec.o tac.o lex.yy.c
+code_generator: symtab.o parser.tab.o linkedlist.o tac.o semrec.o tac.o lex.yy.c
 	$(CC) -o $@ $?
 
 parser.tab.o: semrec.o tac.o
@@ -27,4 +27,4 @@ lex.yy.c: parser.tab.h
 	@touch $@
 
 clean:
-	rm *.tab.h *.tab.c *.o parser.output semantic_analyzer *.yy.c
+	rm *.tab.h *.tab.c *.o parser.output code_generator *.yy.c
