@@ -57,6 +57,13 @@ char* gen5(char* s1, char* s2, char* s3, char* s4, char* s5, node** n) {
     return c;
 }
 
+char* gen6(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, node** n) {
+    char* c;
+    asprintf(&c, "%s %s %s %s %s %s", s1, s2, s3, s4, s5, s6);
+    gen(c, n);
+    return c;
+}
+
 char* temp() {
   char* s = malloc(snprintf(NULL, 0, "t%d", current_temp) + 1);
   sprintf(s, "t%d", ++current_temp);

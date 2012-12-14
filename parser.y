@@ -373,6 +373,18 @@ structured_statement: //TODO
             gen2($$.next, ":", &($$.code));
         }
         |       FOR ID ASSIGN expression TO expression DO statement
+        {
+            $$.next = nextlabel();
+            $$.fls = nextlabel();
+            $$.code = $4.code;
+            gen3($2->name, "=", $4.addr, &($$.code));
+            gen2($$.fls, ":", &($$.code));
+            gen6("if", $2->name, ">", $6.addr, "GOTO", $$.next, &($$.code));
+            list_merge($$.code, $8.code);
+            gen5($2->name, "=", $2->name, "+", "1", &($$.code));
+            gen2("GOTO", $$.fls, &($$.code));
+            gen2($$.next, ":", &($$.code));
+        }
         ;
 
 procedure_statement:
