@@ -137,6 +137,7 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <semr> statement_sequence
 %type <semr> expression_list
 %type <semr> actual_parameter_list
+%type <semr> procedure_declaration
 
 
 %%
@@ -227,8 +228,13 @@ block:
 procedure_declaration:
                 PROCEDURE ID LPAR formal_parameters RPAR SEMIC block_or_forward
                 {
-                $2->type = lookup("PROCEDURE", symtab_root);
-                reset_saved_symbols(saved_symbols); }
+                    $2->type = lookup("PROCEDURE", symtab_root);
+                    reset_saved_symbols(saved_symbols);
+                    gen2($2->label, ":", &($$.code));
+                    list_merge($$.code, $7.code);
+                    gen("return", &($$.code));
+
+                }
         ;
 
 block_or_forward:
@@ -253,7 +259,7 @@ function_declaration:
                 current_scope = current_scope->parent;
                 gen2($2->label, ":", &($$.code));
                 list_merge($$.code, $11.code);
-                gen2("return", $2->name, &($$.code));
+                gen2("funreturn", $2->name, &($$.code));
                 }
         ;
 
