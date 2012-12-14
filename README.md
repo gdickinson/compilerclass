@@ -20,7 +20,7 @@ CIMS systems. If something goes wrong or you want to recompile, there's a
 
 Running the project:
 
-  ./semantic_analyzer <input file>
+  ./code_generator <input file>
 
 Will parse an input file, print out warnings when semantic errors are encountered, and upon
 reaching EOF (providing that no fatal errors were encountered), print the symbol table, broken into
@@ -28,7 +28,7 @@ scopes, which is handy for debugging.
 
 If no file name is specified, the parser will read from STDIN, making
 
-  cat <somefile> | ./parser
+  cat <somefile> | ./code_generator
 
 possible, to comply with general POSIX good practice.
 
@@ -41,3 +41,4 @@ possible by insertion of symbols into the symbol table by the lexer, not the par
 * We continue parsing right to the end, unless we encounter a fatal parsing or lexing error.
 * Type checking is done by reducing everything to primitive types. Not the fastest, but the easiest
 to implement.
+* At some point during code-generation, I seem to have broken the type system a bit. The output code should still be semantically valid.
