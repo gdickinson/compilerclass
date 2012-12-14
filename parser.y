@@ -320,9 +320,7 @@ assignment_statement:
 
                     // TAC
                    $$.code = $3.code;
-                   char* c;
-                   asprintf(&c, "%s = %s", $1.addr, $3.addr);
-                   gen(c, &($$.code));
+                   gen3($1.addr, "=", $3.addr, &($$.code));
                 }
         ;
 
@@ -344,15 +342,25 @@ structured_statement: //TODO
                 compound_statement
         |       IF expression THEN statement
                 {
-                    $2.tru = nextlabel();
-                    $2.fls = $$.next;
-                    $4.next = $$.next;
-                    $$.code = malloc(512);
-                    //printf("$$.next is %s\n", $$.next);
-                    //sprintf($$.code, "structured: %s\n%s: %s\n", $2.code, $2.fls, $4.code);
+                    $$.next = nextlabel();
+                    $$.code = $2.code;
+                    gen4("ifFalse", $2.addr, "GOTO", $$.next, &($$.code));
+                    list_merge($$.code, $4.code);
+                    gen2($$.next, ":", &$$.code);
                 }
-
         |       IF expression THEN statement ELSE statement
+        {
+            $$.next = nextlabel();
+            $$.fls = nextlabel();
+            $$.code = $2.code;
+            gen4("ifFalse", $2.addr, "GOTO", $$.fls, &($$.code));
+            list_merge($$.code, $4.code);
+            gen2("GOTO", $$.next, &($$.code));
+            gen2($$.fls, ":",  &($$.code));
+            list_merge($$.code, $6.code);
+            gen2($$.next, ":", &($$.code));
+        }
+
         |       WHILE expression DO statement
         |       FOR ID ASSIGN expression TO expression DO statement
         ;
@@ -367,7 +375,7 @@ actual_parameter_list:
         ;
 
 expression_list:
-expression COMMA expression_list {$$.code = $1.code; list_merge($$.code, $3.code); }
+                        expression COMMA expression_list {$$.code = $1.code; list_merge($$.code, $3.code); }
                 |       expression
                 {
                     $$.addr = temp();
@@ -388,14 +396,13 @@ constant:
         ;
 
 expression:
-                simple_expression { $$ = $1; }
+                simple_expression
         |       simple_expression relational_op simple_expression
                 {
-                    //$$.addr = temp();
-                    //gen($$.addr, $1.addr, $2, $3.addr);
-                    //printf("In exp\n");
-                    //$$.code = "if derp > herp goto someplace\n";
-                    //printf("$$.tru is %s\n", $$.tru);
+                    $$.addr = temp();
+                    $$.code = $1.code;
+                    list_merge($$.code, $3.code);
+                    gen5($$.addr, "=", $1.addr, $2, $3.addr, &($$.code));
                 }
         ;
 
@@ -405,7 +412,7 @@ relational_op:
         |       LEQ { $$ = "<="; }
         |       GEQ { $$ = ">="; }
         |       DIAMOND { $$ = "<>"; }
-        |       EQUALS { $$ = "="; }
+        |       EQUALS { $$ = "=="; }
         ;
 
 simple_expression:
