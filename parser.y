@@ -123,7 +123,7 @@ void process_saved_symbols(idlist* list, symbol* type);
 %type <sval> constant
 %type <sval> sign
 %type <sval> relational_op
-%type <semr> component_selection
+ //%type <semr> component_selection
 %type <semr> statement
 %type <semr> structured_statement
 %type <semr> simple_statement
@@ -329,26 +329,7 @@ assignment_statement:
                 }
         ;
 
-component_selection:
-                DOT ID component_selection
-                {
-
-                    //                    $$.code = $3.code;
-                    //$3.addr = temp();
-                    //gen3($$.addr, "=", $3.addr, &($$.code));
-
-                    //$$.addr = temp();
-                    //char* v;
-                    //asprintf(&v, "%s.%s", last_id, $3.addr);
-                    //                    last_id = strdup($$.addr);
-                    //gen($$.addr, v, NULL, NULL);
-                    //todo
-                }
-        |       LBKT expression RBKT component_selection {}
-        |       {}// Epsilon
-        ;
-
-structured_statement: //TODO
+structured_statement:
                 compound_statement
         |       IF expression THEN statement
                 {
